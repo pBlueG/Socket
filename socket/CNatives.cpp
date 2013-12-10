@@ -89,3 +89,52 @@ cell AMX_NATIVE_CALL n_get_remote_client_ip(AMX* amx, cell* params)
 	g_pString->Set(amx, params[3], g_pSocket->get_remote_client_ip(params[1], params[2]));
 	return 1;
 }
+
+cell AMX_NATIVE_CALL n_ssl_create(AMX* amx, cell* params)
+{
+	return g_pSocket->ssl_create(params[1], params[2]);
+}
+
+cell AMX_NATIVE_CALL n_ssl_connect(AMX* amx, cell* params)
+{
+	return g_pSocket->ssl_connect(params[1]);
+}
+
+cell AMX_NATIVE_CALL n_ssl_load_cert(AMX* amx, cell* params)
+{
+	char *szCert, *szKey;
+	g_pString->Get(amx, params[2], szCert);
+	g_pString->Get(amx, params[3], szKey);
+	cell ret_val = g_pSocket->ssl_load_cert(params[1], szCert, szKey);
+	free(szCert);
+	free(szKey);
+	return ret_val;
+}
+
+cell AMX_NATIVE_CALL n_ssl_set_mode(AMX* amx, cell* params)
+{
+	return g_pSocket->ssl_set_mode(params[1], params[2]);
+}
+
+cell AMX_NATIVE_CALL n_socket_send_array(AMX* amx, cell* params)
+{
+	cell *aData;
+	amx_GetAddr(amx, params[2], &aData);
+	return g_pSocket->socket_send_array(params[1], aData, params[3]);
+}
+
+cell AMX_NATIVE_CALL n_ssl_set_accept_timeout(AMX* amx, cell* params)
+{
+	return g_pSocket->ssl_set_timeout(params[1], params[2]);
+}
+
+cell AMX_NATIVE_CALL n_ssl_init(AMX* amx, cell* params)
+{
+	g_pSocket->ssl_init();
+	return 1;
+}
+
+cell AMX_NATIVE_CALL n_ssl_get_peer_certificate(AMX* amx, cell* params)
+{
+	return 1;
+}

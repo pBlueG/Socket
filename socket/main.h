@@ -1,12 +1,16 @@
 #pragma once
 
 #pragma warning (disable:4005 4700 996)
+// SA-MP SDK
 #include "../SDK/amx/amx.h"
 #include "../SDK/plugincommon.h"
+// OpenSSL
+#include "openssl/rand.h"
+#include "openssl/ssl.h"
+#include "openssl/err.h"
 #if (defined(WIN32) || defined(_WIN32) || defined(_WIN64))
-	#include "winsock2.h"
 	#include "windows.h"
-	#include "ws2tcpip.h"
+	#include "io.h"
 	#pragma comment(lib, "ws2_32.lib")
 #else
 	#include "sys/types.h"
@@ -25,7 +29,9 @@
 #include "CSocket.h"
 #include "CNatives.h"
 
-#define VERSION "0.1b"
+
+#define VERSION "0.2a"
+#define INVALID_CLIENT_ID (-1)
 
 #ifdef WIN32
 	#define SLEEP(x) { Sleep(x); }

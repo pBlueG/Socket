@@ -12,7 +12,7 @@ std::queue<socketAnswer> onSocketAnswer;
 std::queue<socketClose> onSocketClose;
 std::queue<socketUDP> onUDPReceiveData;
 
-PLUGIN_EXPORT int PLUGIN_CALL ProcessTick( )
+PLUGIN_EXPORT int PLUGIN_CALL ProcessTick()
 {
 	if(!onRemoteConnect.empty()) {
 		remoteConnect tempData = onRemoteConnect.front();
@@ -146,6 +146,14 @@ AMX_NATIVE_INFO PluginNatives[] =
 	{"socket_remote_client_connected", n_is_remote_client_connected},
 	{"is_socket_valid", n_is_socket_valid},
 	{"get_remote_client_ip", n_get_remote_client_ip},
+	{"ssl_create_context", n_ssl_create},
+	{"ssl_connect", n_ssl_connect},
+	{"ssl_load_cert_into_context", n_ssl_load_cert},
+	{"ssl_set_mode", n_ssl_set_mode},
+	{"socket_send_array", n_socket_send_array},
+	{"ssl_set_accept_timeout", n_ssl_set_accept_timeout},
+	{"ssl_init", n_ssl_init},
+	{"ssl_get_peer_certificate", n_ssl_get_peer_certificate},
     {0, 0}
 };
 

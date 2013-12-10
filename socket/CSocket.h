@@ -10,9 +10,13 @@ struct SocketStruct {
 	bool success;
 	bool is_client; // true = client, false = server
 	bool active_thread;
+	bool ssl;
 	int max_clients;
 	int* connected_clients;
 	char bind_ip[15];
+	SSL_CTX *ssl_context; // client & server
+	SSL *ssl_handle; // client side
+	SSL **ssl_clients; // server side
 };
 
 class CSocket
@@ -39,6 +43,13 @@ public:
 	int is_socket_valid(int socketid);
 	char* get_remote_client_ip(int socketid, int remote_clientid);
 	void close_socket(int socket);
+	int ssl_create(int socketid, int method);
+	int ssl_connect(int socketid);
+	int ssl_load_cert(int socketid, char* szCert, char* szKey);
+	int ssl_set_mode(int socketid, int mode);
+	int socket_send_array(int socketid, cell* aData, int size);
+	int ssl_set_timeout(int socketid, DWORD dwInterval);
+	void ssl_init();
 //private:
 };
 
