@@ -1,0 +1,8 @@
+LIBRARY	"socket"
+EXPORTS
+	Supports
+	Load
+	Unload
+	AmxLoad
+	AmxUnload
+	ProcessTick
