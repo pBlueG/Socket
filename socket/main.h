@@ -21,6 +21,16 @@
 	#include "unistd.h"
 	#include "pthread.h"
 #endif
+
+#ifdef WIN32
+	#define SLEEP(x) { Sleep(x); }
+#else
+	#define SLEEP(x) { usleep(x * 1000); }
+	#define SOCKET_ERROR (-1)
+	typedef unsigned long DWORD;
+	typedef unsigned int UINT;
+#endif
+
 #include "queue"
 #include "list"
 #include "string.h"
@@ -32,15 +42,6 @@
 
 #define VERSION "0.2a"
 #define INVALID_CLIENT_ID (-1)
-
-#ifdef WIN32
-	#define SLEEP(x) { Sleep(x); }
-#else
-	#define SLEEP(x) { usleep(x * 1000); }
-	#define SOCKET_ERROR (-1)
-	typedef unsigned long DWORD;
-	typedef unsigned int UINT;
-#endif
 
 typedef void (*logprintf_t)(char* format, ...);
 
