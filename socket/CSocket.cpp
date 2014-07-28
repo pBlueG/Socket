@@ -93,6 +93,7 @@ int CSocket::connect_socket(int socketid, char* address, int port)
 	addr.sin_addr = *((struct in_addr *) host->h_addr);
 	if(strlen(m_pSocketInfo[socketid].bind_ip) > 0) {
 		sockaddr_in bind_addr;
+		
 		bind_addr.sin_addr.s_addr = inet_addr(m_pSocketInfo[socketid].bind_ip);
 		bind_addr.sin_family = AF_INET;
 		if(bind(m_pSocket[socketid], (struct sockaddr *)&bind_addr, sizeof(bind_addr)) == -1) {
@@ -223,8 +224,10 @@ int CSocket::send_socket(int socketid, char* data, int len)
 		return 0;
 	}
 	//strcat(datam_pSocketInfo[socketid], "\r\n");
+
 	if(!m_pSocketInfo[socketid].ssl)
 		return send(m_pSocket[socketid], data, len, 0);
+		//return sendto(m_pSocket[socketid], data, len, 0, (struct sockaddr *)&addr, sizeof(addr));
 	else
 		return SSL_write(m_pSocketInfo[socketid].ssl_handle, data, len);
 }
@@ -473,15 +476,16 @@ void* socket_receive_thread(void* lpParam)
 #endif
 {
 	int sockID = (int)lpParam,
-		curConnection,
+		iHandle,
 		maxClients;
 	bool sockType = g_pSocket->m_pSocketInfo[sockID].is_client;
 	bool tcpProtocol = g_pSocket->m_pSocketInfo[sockID].tcp;
-	char szRecBuffer[1024];
-	curConnection = g_pSocket->m_pSocket[sockID];
+	char szBuffer[512];
+	iHandle = g_pSocket->m_pSocket[sockID];
 	// logprintf("Thread started with socket id %d", sockID);
-	memset(szRecBuffer, '\0', sizeof(szRecBuffer));
-	if(!sockType) maxClients = g_pSocket->m_pSocketInfo[sockID].max_clients;
+	memset(szBuffer, '\0', sizeof(szBuffer));
+	if(!sockType) 
+		maxClients = g_pSocket->m_pSocketInfo[sockID].max_clients;
 	do {
 		if(!tcpProtocol) {
 			// udp
@@ -491,39 +495,48 @@ void* socket_receive_thread(void* lpParam)
 #else
 			size_t client_len = sizeof(remote_client);
 #endif
-			int byte_len = recvfrom(curConnection, szRecBuffer, sizeof(szRecBuffer), 0, (struct sockaddr*)&remote_client, &client_len);
+			int byte_len = recvfrom(iHandle, szBuffer, 512, 0, (struct sockaddr*)&remote_client, &client_len);
 			if(byte_len > 0) {
 				socketUDP pData;
-				pData.data = (char*)malloc(sizeof(char)*byte_len);
-				strcpy(pData.data, szRecBuffer);
+				szBuffer[byte_len] = 0;
+				if(strlen(szBuffer) != byte_len) {
+					memset(pData.arr, '\0', byte_len+1);
+					for(int i = 0;i < byte_len;i++) {
+						pData.arr[i] = szBuffer[i];
+					}
+					pData.is_arr = true;
+				} else {
+					pData.data = (char*)malloc(byte_len);
+					strcpy(pData.data, szBuffer);
+					pData.is_arr = false;
+				}
 				pData.data_len = byte_len;
 				pData.remote_ip = (char*)malloc(sizeof(char*)*15);
 				strcpy(pData.remote_ip, inet_ntoa(remote_client.sin_addr));
 				pData.remote_port = ntohs(remote_client.sin_port);
 				pData.socketid = sockID;
 				onUDPReceiveData.push(pData);
-				memset(szRecBuffer, '\0', sizeof(szRecBuffer));
 			}
-			SLEEP(200);
+			SLEEP(200); // 200
 			continue; // skip further processing 
 		}
 		if(sockType) {
 			// tcp client
 			int byte_len;
 			if(g_pSocket->m_pSocketInfo[sockID].ssl)
-				byte_len = SSL_read(g_pSocket->m_pSocketInfo[sockID].ssl_handle, szRecBuffer, 1024);
+				byte_len = SSL_read(g_pSocket->m_pSocketInfo[sockID].ssl_handle, szBuffer, 1024);
 			else
-				byte_len = recv(curConnection, szRecBuffer, sizeof(szRecBuffer), NULL);
+				byte_len = recv(iHandle, szBuffer, sizeof(szBuffer), NULL);
 			if(byte_len > 0) {
-				//remove_newline(szRecBuffer);
-				szRecBuffer[byte_len] = '\0';
+				//remove_newline(szBuffer);
+				szBuffer[byte_len] = '\0';
 				socketAnswer pData;
 				pData.socketid = sockID;
 				pData.data_len = byte_len;
 				pData.data = (char*)malloc(sizeof(char*)*byte_len);
-				strcpy(pData.data, szRecBuffer);
+				strcpy(pData.data, szBuffer);
 				onSocketAnswer.push(pData);
-				//memset(szRecBuffer, '\0', sizeof(szRecBuffer));
+				//memset(szBuffer, '\0', sizeof(szBuffer));
 			}
 			if(!byte_len) {
 				socketClose pData;
@@ -535,19 +548,19 @@ void* socket_receive_thread(void* lpParam)
 		} else { 
 			// tcp server
 			for(int i = 0;i < maxClients;i++) { // loop through all connected clients
-				curConnection = g_pSocket->m_pSocketInfo[sockID].connected_clients[i];
-				if(curConnection != (-1)) {
+				iHandle = g_pSocket->m_pSocketInfo[sockID].connected_clients[i];
+				if(iHandle != (-1)) {
 					int byte_len;
 					if(g_pSocket->m_pSocketInfo[sockID].ssl)
-						byte_len = SSL_read(g_pSocket->m_pSocketInfo[sockID].ssl_clients[i], szRecBuffer, 1024);
+						byte_len = SSL_read(g_pSocket->m_pSocketInfo[sockID].ssl_clients[i], szBuffer, 1024);
 					else
-						byte_len = recv(curConnection, szRecBuffer, sizeof(szRecBuffer), NULL);
+						byte_len = recv(iHandle, szBuffer, sizeof(szBuffer), NULL);
 					if(byte_len > 0) {
-						//remove_newline(szRecBuffer);
-						szRecBuffer[byte_len] = '\0';
+						//remove_newline(szBuffer);
+						szBuffer[byte_len] = '\0';
 						receiveData pData;
 						pData.data = (char*)malloc(sizeof(char*)*byte_len);
-						strcpy(pData.data, szRecBuffer);
+						strcpy(pData.data, szBuffer);
 						pData.socketid = sockID;
 						pData.remote_clientid = i;
 						pData.data_len = byte_len;
@@ -558,7 +571,7 @@ void* socket_receive_thread(void* lpParam)
 						pData.remote_clientid = i;
 						pData.socketid = sockID;
 						if(g_pSocket->m_pSocketInfo[sockID].ssl) SSL_free(g_pSocket->m_pSocketInfo[sockID].ssl_clients[i]);
-						g_pSocket->close_socket(curConnection);
+						g_pSocket->close_socket(iHandle);
 						g_pSocket->m_pSocketInfo[sockID].connected_clients[i] = INVALID_CLIENT_ID; // connection has dropped
 						onRemoteDisconnect.push(pData);
 					}

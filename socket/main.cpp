@@ -92,19 +92,24 @@ PLUGIN_EXPORT int PLUGIN_CALL ProcessTick()
 		socketUDP tempData = onUDPReceiveData.front();
 		int amx_idx;
 		cell amx_Address[2], amx_Ret;
+		cell **phys;
 		for (std::list<AMX *>::iterator a = g_pAMX.begin(); a != g_pAMX.end(); a++) {
 			if(amx_FindPublic(* a, "onUDPReceiveData", &amx_idx) == AMX_ERR_NONE) {
 				amx_Push(* a, tempData.remote_port);
 				amx_PushString(* a, &amx_Address[0], NULL, tempData.remote_ip, 0, 0);
 				amx_Push(* a, tempData.data_len);
-				amx_PushString(* a, &amx_Address[1], NULL, tempData.data, 0, 0);
+				if(tempData.is_arr)
+					amx_PushArray(* a, &amx_Address[1], phys, tempData.arr, tempData.data_len);
+				else
+					amx_PushString(* a, &amx_Address[1], NULL, tempData.data, 0, 0);
 				amx_Push(* a, tempData.socketid);
 				amx_Exec(* a, &amx_Ret, amx_idx);
 				amx_Release(* a, amx_Address[0]);
 				amx_Release(* a, amx_Address[1]);
 			}
 		}
-		free(tempData.data);
+		if(!tempData.is_arr)
+			free(tempData.data);
 		free(tempData.remote_ip);
 		onUDPReceiveData.pop();
 	}

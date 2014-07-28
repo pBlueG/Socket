@@ -40,7 +40,7 @@
 #include "CNatives.h"
 
 
-#define VERSION "0.2a"
+#define VERSION "0.2b"
 #define INVALID_CLIENT_ID (-1)
 
 typedef void (*logprintf_t)(char* format, ...);
@@ -80,6 +80,8 @@ struct socketUDP {
 	int data_len;
 	char* remote_ip;
 	int remote_port;
+	cell arr[512];
+	bool is_arr;
 };
 
 extern std::queue<remoteConnect> onRemoteConnect;
