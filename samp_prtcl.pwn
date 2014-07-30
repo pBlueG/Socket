@@ -20,11 +20,11 @@ new Socket:StatsHandle;
 
 public OnFilterScriptInit()
 {
-	new IP[20] = "74.91.121.242";
-	new Port = 1196;
+	new IP[20] = "91.121.97.26"; // random ip for testing
+	new Port = 7844;
 	StatsHandle = socket_create(UDP);
 	if(udpConnect(IP, Port))
-		sendPacket(IP, Port, PRTCL_PLAYERINFO);
+		sendPacket(IP, Port, PRTCL_PLAYERLIST);
 	return 1;
 }
 
@@ -50,14 +50,14 @@ stock sendPacket(ip[], port, prtcl_type, extra[] = "")
 public onUDPReceiveData(Socket:id, data[], data_len, remote_client_ip[], remote_client_port)
 {
 	if(id == StatsHandle && data_len > 11) {
-        new prtcl_type = data[10];
+		new prtcl_type = data[10];
 		array_slice(data, 11, data_len);
 		switch(prtcl_type) {
 		    // Server information
 		    case PRTCL_SERVERINFO: {
 				//kinda a mess to parse this in PAWN
 		        new bool:passworded = (data[0] != NULL ? true : false),
-		            players[4], sLen[4],
+					players[4], sLen[4],
 					iHost, iMod, iMap, iPlayers, iMaxPlayers,
 					sHostname[80], sModename[40], sMapname[40];
 				format(players, 4, "%c%c\0\0", data[1], data[2]);
@@ -88,42 +88,47 @@ public onUDPReceiveData(Socket:id, data[], data_len, remote_client_ip[], remote_
 				 */
 			}
 			case PRTCL_RULES: {
-				new rules[4], iRules, iLen,
-				    sRulename[12], sRule[30];
-				format(rules, 4, "%c%c\0\0", data[0], data[1]);
+				new rules[4], iRules, iLen, iArr,
+					sRulename[12], sRule[50];
+				memset(rules, '\0');
+				memcpy(rules, data, 0, 4*2);
 				iRules = toInteger(rules);
 				array_slice(data, 2, data_len-11);
 				for(new i;i < iRules;i++) {
-				    iLen = data[0];
-				    strmid(sRulename, data, 1, iLen+1);
-				    array_slice(data, iLen+1, (data_len-11));
+					iLen = data[0];
+					strmid(sRulename, data, 1, iLen+1);
+					array_slice(data, iLen+1, (data_len-11));
 					iLen = data[0];
 					strmid(sRule, data, 1, iLen+1);
-					array_slice(data, iLen+1, (data_len-11));
+					iArr += iLen;
+					array_slice(data, iLen+1, (data_len-(11+iArr)));
 					printf("Rule %s => %s", sRulename, sRule);
 					/**
-					 * sRulename[](string) contains the name  of the rule
-					 * sRule[](string) contains the actual rule
-					 */
+				 	 * sRulename[](string) contains the name  of the rule
+				 	 * sRule[](string) contains the actual rule
+				 	 */
 				}
 			}
 			case PRTCL_PLAYERLIST: {
 			    new players[4], iPlayers,
 					sPlayer[MAX_PLAYER_NAME], iLen, iScore,
 					score[4];
-			    format(players, 4, "%c%c\0\0", data[0], data[1]);
-			    iPlayers = toInteger(players);
-			    array_slice(data, 2, data_len-11);
-			    for(new i;i < iPlayers;i++) {
-			        iLen = data[0];
-			        strmid(sPlayer, data, 1, iLen+1);
-					format(score, 4, "%c%c%c%c", data[iLen+1], data[iLen+2], data[iLen+3], data[iLen+4]);
-			        iScore = toInteger(score);
-			        array_slice(data, strlen(sPlayer)+5, (data_len-13));
-			        /**
-					 * sPlayer[](string) contains the playername
-    				 * iScore(int) contains the current score
-    				 */
+				memset(players, '\0');
+				memcpy(players, data, 0, sizeof(players)*2);
+				iPlayers = toInteger(players);
+				array_slice(data, 2, data_len-11);
+				for(new i;i < iPlayers;i++) {
+					iLen = data[0];
+					strmid(sPlayer, data, 1, iLen+1);
+					array_slice(data, iLen+1, data_len-11);
+					memcpy(score, data, 0, sizeof(score)*4);
+					iScore = toInteger(score);
+					array_slice(data, 4, data_len-11);
+					/**
+					* iPlayers(int) contains the current player count
+					* sPlayer[](string) contains the playername
+					* iScore(int) contains the current score
+					*/
 				}
 				#pragma unused iScore
 			}
@@ -131,19 +136,23 @@ public onUDPReceiveData(Socket:id, data[], data_len, remote_client_ip[], remote_
 			    new players[4], iPlayers, playerid, iLen, sPlayer[MAX_PLAYER_NAME],
 					score[4], iScore,
 					ping[4], iPing;
-			    format(players, 4, "%c%c\0\0", data[0], data[1]);
-			    iPlayers = toInteger(players);
-			    array_slice(data, 2, data_len-11);
+				memset(players, '\0');
+				memcpy(players, data, 0, sizeof(players)*2);
+				iPlayers = toInteger(players);
+				array_slice(data, 2, data_len-11);
 				for(new i;i < iPlayers;i++) {
-				    playerid = data[0];
+					playerid = data[0];
 					iLen = data[1];
-					strmid(sPlayer, data, 2, iLen+2);
-					format(score, 4, "%c%c%c%c", data[iLen+2], data[iLen+3], data[iLen+4], data[iLen+5]);
-					format(ping, 4, "%c%c%c%c", data[iLen+6], data[iLen+7], data[iLen+8], data[iLen+9]);
+					array_slice(data, 2, data_len-13);
+					strmid(sPlayer, data, 0, iLen);
+					array_slice(data, iLen, data_len-13);
+					memcpy(score, data, 0, sizeof(score)*4);
+					array_slice(data, 4, data_len-13);
+					memcpy(ping, data, 0, sizeof(ping)*4);
+					array_slice(data, 4, data_len-13);
 					iScore = toInteger(score);
 					iPing = toInteger(ping);
-					array_slice(data, strlen(sPlayer)+10, data_len-13);
-				    /**
+					/**
 					 * sPlayer[](string) containts the playername
 					 * playerid(int) contains the playerid
 					 * iScore(int) contains the playerscore
@@ -167,14 +176,79 @@ public onUDPReceiveData(Socket:id, data[], data_len, remote_client_ip[], remote_
 stock toInteger(bytes[], s=sizeof(bytes))
 {
 	new ret = 0;
-	ret += bytes[0];
+	ret += (bytes[0] & 0xFF);
 	if(s > 1 && bytes[1] != NULL)
-	    ret += bytes[1] << 8;
+	    ret += (bytes[1] & 0xFF) << 8;
 	if(s > 2 && bytes[2] != NULL)
-	    ret += bytes[2] << 16;
+	    ret += (bytes[2] & 0xFF) << 16;
 	if(s > 3 && bytes[3] != NULL)
-	    ret += bytes[3] << 24;
+	    ret += (bytes[3] & 0xFF) << 24;
 	return ret;
+}
+
+// (c) by Slice
+stock memset(aArray[], iValue, iSize = sizeof(aArray)) {
+    new
+        iAddress
+    ;
+
+    // Store the address of the array
+    #emit LOAD.S.pri 12
+    #emit STOR.S.pri iAddress
+
+    // Convert the size from cells to bytes
+    iSize *= 4;
+
+    // Loop until there is nothing more to fill
+    while (iSize > 0) {
+        // I have to do this because the FILL instruction doesn't accept a dynamic number.
+        if (iSize >= 4096) {
+            #emit LOAD.S.alt iAddress
+            #emit LOAD.S.pri iValue
+            #emit FILL 4096
+
+            iSize    -= 4096;
+            iAddress += 4096;
+        } else if (iSize >= 1024) {
+            #emit LOAD.S.alt iAddress
+            #emit LOAD.S.pri iValue
+            #emit FILL 1024
+
+            iSize    -= 1024;
+            iAddress += 1024;
+        } else if (iSize >= 256) {
+            #emit LOAD.S.alt iAddress
+            #emit LOAD.S.pri iValue
+            #emit FILL 256
+
+            iSize    -= 256;
+            iAddress += 256;
+        } else if (iSize >= 64) {
+            #emit LOAD.S.alt iAddress
+            #emit LOAD.S.pri iValue
+            #emit FILL 64
+
+            iSize    -= 64;
+            iAddress += 64;
+        } else if (iSize >= 16) {
+            #emit LOAD.S.alt iAddress
+            #emit LOAD.S.pri iValue
+            #emit FILL 16
+
+            iSize    -= 16;
+            iAddress += 16;
+        } else {
+            #emit LOAD.S.alt iAddress
+            #emit LOAD.S.pri iValue
+            #emit FILL 4
+
+            iSize    -= 4;
+            iAddress += 4;
+        }
+    }
+
+    // aArray is used, just not by its symbol name
+    #pragma unused aArray
 }
 
 array_slice(arr[], idx, size = sizeof(arr))
