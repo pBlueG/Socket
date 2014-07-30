@@ -20,11 +20,11 @@ new Socket:StatsHandle;
 
 public OnFilterScriptInit()
 {
-	new IP[20] = "188.226.221.218";
-	new Port = 7777;
+	new IP[20] = "74.91.121.242";
+	new Port = 1196;
 	StatsHandle = socket_create(UDP);
 	if(udpConnect(IP, Port))
-		sendPacket(IP, Port, PRTCL_RULES);
+		sendPacket(IP, Port, PRTCL_PLAYERINFO);
 	return 1;
 }
 
@@ -60,7 +60,6 @@ public onUDPReceiveData(Socket:id, data[], data_len, remote_client_ip[], remote_
 		            players[4], sLen[4],
 					iHost, iMod, iMap, iPlayers, iMaxPlayers,
 					sHostname[80], sModename[40], sMapname[40];
-				#pragma unused passworded
 				format(players, 4, "%c%c\0\0", data[1], data[2]);
 				iPlayers = toInteger(players);
 				format(players, 4, "%c%c\0\0", data[3], data[4]);
@@ -78,17 +77,36 @@ public onUDPReceiveData(Socket:id, data[], data_len, remote_client_ip[], remote_
 				iMap = toInteger(sLen);
 				array_slice(data, (iMod+4), (data_len-20-iMod));
 				strmid(sMapname, data, 0, iMap);
-				printf("Players %d/%d", iPlayers, iMaxPlayers);
-				printf("Passworded %i (0 = No, 1 = Yes)", passworded);
-				printf("Hostname %s", sHostname);
-				printf("Modename %s", sModename);
-				printf("Map %s", sMapname);
+				#pragma unused passworded, iPlayers, iMaxPlayers
+				/**
+				 * iPlayers(int) contains the current playercount
+				 * iMaxPlayers(int) contains the maxplayers var
+				 * passworded(bool) true, false
+				 * sHostname[](string) contains the server hostname
+				 * sModename[](string) contains the gamemode name
+				 * sMapname[](string) contains the map nam
+				 */
 			}
-			// Server rules
 			case PRTCL_RULES: {
-				// TODO
+				new rules[4], iRules, iLen,
+				    sRulename[12], sRule[30];
+				format(rules, 4, "%c%c\0\0", data[0], data[1]);
+				iRules = toInteger(rules);
+				array_slice(data, 2, data_len-11);
+				for(new i;i < iRules;i++) {
+				    iLen = data[0];
+				    strmid(sRulename, data, 1, iLen+1);
+				    array_slice(data, iLen+1, (data_len-11));
+					iLen = data[0];
+					strmid(sRule, data, 1, iLen+1);
+					array_slice(data, iLen+1, (data_len-11));
+					printf("Rule %s => %s", sRulename, sRule);
+					/**
+					 * sRulename[](string) contains the name  of the rule
+					 * sRule[](string) contains the actual rule
+					 */
+				}
 			}
-			// Player list + score
 			case PRTCL_PLAYERLIST: {
 			    new players[4], iPlayers,
 					sPlayer[MAX_PLAYER_NAME], iLen, iScore,
@@ -102,12 +120,37 @@ public onUDPReceiveData(Socket:id, data[], data_len, remote_client_ip[], remote_
 					format(score, 4, "%c%c%c%c", data[iLen+1], data[iLen+2], data[iLen+3], data[iLen+4]);
 			        iScore = toInteger(score);
 			        array_slice(data, strlen(sPlayer)+5, (data_len-13));
-			        printf("Player %s (Score %d)", sPlayer, iScore);
+			        /**
+					 * sPlayer[](string) contains the playername
+    				 * iScore(int) contains the current score
+    				 */
 				}
+				#pragma unused iScore
 			}
-			// Player list + playerid + ping + score
 			case PRTCL_PLAYERINFO: {
-			    // TODO
+			    new players[4], iPlayers, playerid, iLen, sPlayer[MAX_PLAYER_NAME],
+					score[4], iScore,
+					ping[4], iPing;
+			    format(players, 4, "%c%c\0\0", data[0], data[1]);
+			    iPlayers = toInteger(players);
+			    array_slice(data, 2, data_len-11);
+				for(new i;i < iPlayers;i++) {
+				    playerid = data[0];
+					iLen = data[1];
+					strmid(sPlayer, data, 2, iLen+2);
+					format(score, 4, "%c%c%c%c", data[iLen+2], data[iLen+3], data[iLen+4], data[iLen+5]);
+					format(ping, 4, "%c%c%c%c", data[iLen+6], data[iLen+7], data[iLen+8], data[iLen+9]);
+					iScore = toInteger(score);
+					iPing = toInteger(ping);
+					array_slice(data, strlen(sPlayer)+10, data_len-13);
+				    /**
+					 * sPlayer[](string) containts the playername
+					 * playerid(int) contains the playerid
+					 * iScore(int) contains the playerscore
+					 * iPing(int) contains the playerping
+					 */
+				}
+				#pragma unused iScore, iPing, playerid
 			}
 			// RCON response
 			case PRTCL_RCON: {
