@@ -480,7 +480,7 @@ void* socket_receive_thread(void* lpParam)
 		maxClients;
 	bool sockType = g_pSocket->m_pSocketInfo[sockID].is_client;
 	bool tcpProtocol = g_pSocket->m_pSocketInfo[sockID].tcp;
-	char szBuffer[512];
+	char szBuffer[2048];
 	iHandle = g_pSocket->m_pSocket[sockID];
 	// logprintf("Thread started with socket id %d", sockID);
 	memset(szBuffer, '\0', sizeof(szBuffer));
@@ -495,7 +495,7 @@ void* socket_receive_thread(void* lpParam)
 #else
 			size_t client_len = sizeof(remote_client);
 #endif
-			int byte_len = recvfrom(iHandle, szBuffer, 512, 0, (struct sockaddr*)&remote_client, &client_len);
+			int byte_len = recvfrom(iHandle, szBuffer, 2048, 0, (struct sockaddr*)&remote_client, &client_len);
 			if(byte_len > 0) {
 				socketUDP pData;
 				szBuffer[byte_len] = 0;
