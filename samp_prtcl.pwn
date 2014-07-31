@@ -1,6 +1,6 @@
 /**
  *
- * SA:MP Server protocol
+ * SA:MP Query protocol
  * (c) BlueG
  * requires the Socket Plugin v0.2b
  */
