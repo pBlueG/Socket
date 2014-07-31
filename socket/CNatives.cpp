@@ -6,8 +6,6 @@ CString* g_pString;
 extern logprintf_t logprintf;
 extern CSocket* g_pSocket;
 
-// native Socket:create_socket();
-
 cell AMX_NATIVE_CALL n_create_socket(AMX* amx, cell* params)
 {
 	return (cell)g_pSocket->create_socket(params[1]);
@@ -62,6 +60,20 @@ cell AMX_NATIVE_CALL n_send_socket(AMX* amx, cell* params)
 	g_pString->Get(amx, params[2], szData);
 	cell ret_val = g_pSocket->send_socket(params[1], szData, params[3]);
 	free(szData);
+	return ret_val;
+}
+
+//native sendto_socket(Socket:id, ip[], port, data[], len)
+//sendto_socket(int socketid, char* ip, int port, char* data, int len)
+
+cell AMX_NATIVE_CALL n_sendto_socket(AMX* amx, cell* params)
+{
+	char *szData, *szIP;
+	g_pString->Get(amx, params[2], szIP);
+	g_pString->Get(amx, params[4], szData);
+	cell ret_val = g_pSocket->sendto_socket(params[1], szIP, params[3], szData, params[5]);
+	free(szData);
+	free(szIP);
 	return ret_val;
 }
 
@@ -136,5 +148,6 @@ cell AMX_NATIVE_CALL n_ssl_init(AMX* amx, cell* params)
 
 cell AMX_NATIVE_CALL n_ssl_get_peer_certificate(AMX* amx, cell* params)
 {
+	// TODO
 	return 1;
 }

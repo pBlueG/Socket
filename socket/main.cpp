@@ -147,6 +147,7 @@ AMX_NATIVE_INFO PluginNatives[] =
 	{"socket_destroy", n_destroy_socket},
 	{"socket_close_remote_client", n_close_remote_connection},
 	{"socket_send", n_send_socket},
+	{"socket_sendto", n_sendto_socket},
 	{"socket_sendto_remote_client", n_sendto_remote_client},
 	{"socket_remote_client_connected", n_is_remote_client_connected},
 	{"is_socket_valid", n_is_socket_valid},

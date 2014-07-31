@@ -86,18 +86,19 @@ int CSocket::connect_socket(int socketid, char* address, int port)
 		return 0;
 	}
 	struct sockaddr_in addr;
-	struct hostent *host;
-	host = gethostbyname(address);
+	//struct hostent *host;
+	//host = gethostbyname(address);
+	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = inet_addr(address);
 	addr.sin_port = htons(port);
-	addr.sin_addr = *((struct in_addr *) host->h_addr);
-	if(strlen(m_pSocketInfo[socketid].bind_ip) > 0) {
+	//addr.sin_addr = *((struct in_addr *) host->h_addr);
+	if(strcmp(m_pSocketInfo[socketid].bind_ip, "0.0.0.0") != 0) {
 		sockaddr_in bind_addr;
-		
 		bind_addr.sin_addr.s_addr = inet_addr(m_pSocketInfo[socketid].bind_ip);
 		bind_addr.sin_family = AF_INET;
 		if(bind(m_pSocket[socketid], (struct sockaddr *)&bind_addr, sizeof(bind_addr)) == -1) {
-			logprintf("socket_connect(): Socket ID %d has failed to bind IP %s.", socketid, m_pSocketInfo[socketid].bind_ip);
+			logprintf("socket_connect(): Socket ID %d has failed to bind. (IP %s, Port %s).", socketid, m_pSocketInfo[socketid].bind_ip);
 			return 0;
 		}
 	} 
@@ -125,13 +126,12 @@ int CSocket::listen_socket(int socketid, int port)
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
 	memset(&(addr.sin_zero), 0, 8);
-	if(!strlen(m_pSocketInfo[socketid].bind_ip)) {
+	if(strcmp(m_pSocketInfo[socketid].bind_ip, "0.0.0.0") != 0)
 		addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	} else {
+	else
 		addr.sin_addr.s_addr = inet_addr(m_pSocketInfo[socketid].bind_ip);
-	}
 	if(bind(m_pSocket[socketid], (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-		logprintf("socket_listen(): Socket has failed to bind on port %d.", port);
+		logprintf("socket_listen(): Socket has failed to bind. (IP %s, Port %d)", m_pSocketInfo[socketid].bind_ip, port);
 		return 0;
 	}
 	if(m_pSocketInfo[socketid].tcp) { 
@@ -191,7 +191,8 @@ int CSocket::destroy_socket(int socketid)
 			free(m_pSocketInfo[socketid].connected_clients);
 		}
 		close_socket(m_pSocket[socketid]);
-		if(m_pSocketInfo[socketid].ssl) SSL_CTX_free(m_pSocketInfo[socketid].ssl_context);
+		if(m_pSocketInfo[socketid].ssl) 
+			SSL_CTX_free(m_pSocketInfo[socketid].ssl_context);
 		//if(m_pSocketInfo[socketid].ssl && m_pSocketInfo[socketid].is_client) SSL_free(m_pSocketInfo[socketid].ssl_handle);
 		m_pSocket[socketid] = (-1);
 		m_pSocketInfo[socketid].listen = false;
@@ -223,14 +224,25 @@ int CSocket::send_socket(int socketid, char* data, int len)
 		logprintf("socket_send(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
 		return 0;
 	}
-	//strcat(datam_pSocketInfo[socketid], "\r\n");
-
 	if(!m_pSocketInfo[socketid].ssl)
 		return send(m_pSocket[socketid], data, len, 0);
-		//return sendto(m_pSocket[socketid], data, len, 0, (struct sockaddr *)&addr, sizeof(addr));
 	else
 		return SSL_write(m_pSocketInfo[socketid].ssl_handle, data, len);
 }
+
+int CSocket::sendto_socket(int socketid, char* ip, int port, char* data, int len)
+{
+	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
+		logprintf("socket_send(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		return 0;
+	}
+	struct sockaddr_in serv_addr;
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = port;
+	serv_addr.sin_addr.s_addr = inet_addr(ip);
+	return sendto(m_pSocket[socketid], data, len, 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr)); 
+}
+//return sendto(m_pSocket[socketid], data, len, 0, (struct sockaddr *)&addr, sizeof(addr));
 
 int CSocket::sendto_remote_client(int socketid, int remote_clientid, char* data)
 {
@@ -389,11 +401,13 @@ int CSocket::socket_send_array(int socketid, cell* aData, int size)
 		logprintf("socket_send_array(): Socket ID %d is invalid", socketid);
 		return 0;
 	}
-	//send()
+	char buf[1024];
+	memset(buf, '\0', sizeof(buf));
+	memcpy(buf, aData, size*4);
 	if(!m_pSocketInfo[socketid].ssl)
-		return write(m_pSocket[socketid], aData, size);
+		return send(m_pSocket[socketid], buf, size, 0);
 	else
-		return SSL_write(m_pSocketInfo[socketid].ssl_handle, aData, size);
+		return SSL_write(m_pSocketInfo[socketid].ssl_handle, buf, size);
 }
 
 int CSocket::ssl_set_timeout(int socketid, DWORD dwInterval)

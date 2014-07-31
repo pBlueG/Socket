@@ -34,7 +34,8 @@ native socket_listen(Socket:id, port); // udp & tcp
 native socket_stop_listen(Socket:id); // udp & tcp
 native socket_destroy(Socket:id); // udp & tcp
 native socket_send(Socket:id, data[], len); // udp & tcp
-native socket_send_array(Socket:id, data[], data_s = sizeof(data));
+native socket_sendto(Socket:id, const ip[], port, data[], len);
+native socket_send_array(Socket:id, data[], size=sizeof(data));
 native is_socket_valid(Socket:id); // udp & tcp
 native socket_set_max_connections(Socket:id, max_remote_clients); // tcp only
 native socket_close_remote_client(Socket:id, remote_clientid); // tcp only

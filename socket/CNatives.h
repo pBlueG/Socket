@@ -11,6 +11,7 @@ cell AMX_NATIVE_CALL n_stop_listen_socket(AMX* amx, cell* params);
 cell AMX_NATIVE_CALL n_destroy_socket(AMX* amx, cell* params);
 cell AMX_NATIVE_CALL n_close_remote_connection(AMX* amx, cell* params);
 cell AMX_NATIVE_CALL n_send_socket(AMX* amx, cell* params);
+cell AMX_NATIVE_CALL n_sendto_socket(AMX* amx, cell* params);
 cell AMX_NATIVE_CALL n_sendto_remote_client(AMX* amx, cell* params);
 cell AMX_NATIVE_CALL n_is_remote_client_connected(AMX* amx, cell* params);
 cell AMX_NATIVE_CALL n_is_socket_valid(AMX* amx, cell* params);

@@ -37,6 +37,7 @@ public:
 	int destroy_socket(int socketid);
 	int close_remote_connection(int socketid, int remote_client_id);
 	int send_socket(int socketid, char* data, int len);
+	int sendto_socket(int socketid, char* ip, int port, char* data, int len);
 	int sendto_remote_client(int socketid, int remote_clientid, char* data);
 	int set_nonblocking_socket(int fd);
 	int is_remote_client_connected(int socketid, int remote_clientid);
