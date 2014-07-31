@@ -50,6 +50,7 @@ public:
 	int ssl_set_mode(int socketid, int mode);
 	int socket_send_array(int socketid, cell* aData, int size);
 	int ssl_set_timeout(int socketid, DWORD dwInterval);
+	int ssl_get_peer_certificate(int socketid, int method, int remote_clientid, char* szIssuer, char* szSubject);
 	void ssl_init();
 //private:
 };

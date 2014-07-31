@@ -1,3 +1,9 @@
+/**
+ *
+ * Socket Plugin v0.2b
+ * (c) BlueG 2012-2014
+ *
+ */
 #if defined socket_included
 	#endinput
 #endif
@@ -10,9 +16,6 @@
 // SSL related
 #define METHOD_CLIENT 0 //v23
 #define METHOD_SERVER 1 //v23
-
-#define TYPE_SERVER 0
-#define TYPE_REMOTECLIENT 1
 
 enum pType {
 	TCP = 1,
@@ -46,13 +49,13 @@ native get_remote_client_ip(Socket:id, remote_clientid, ip[]); // tcp only
 // ssl stuff
 
 native ssl_init(); // initialize the ssl library
-native ssl_create_context(Socket:id, method); // tcp (client & server)
+native ssl_create_context(Socket:id, method);
 native ssl_connect(Socket:id); // tcp (client only)
-native ssl_load_cert_into_context(Socket:id, const certificate[], const private_key[]); // tcp (client&server)
+native ssl_load_cert_into_context(Socket:id, const certificate[], const private_key[]);
 native ssl_shutdown(Socket:id) = socket_destroy;
-native ssl_get_peer_certificate(Socket:id, type, destination[], remote_clientid = 0xFFFF);
+native ssl_get_peer_certificate(Socket:id, method, subject[], issuer[], remote_clientid = 0xFFFF);
 native ssl_set_accept_timeout(Socket:id, interval);
-
+native ssl_set_mode(Socket:id, mode);
 
 
 // client & server (udp)

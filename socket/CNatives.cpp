@@ -63,9 +63,6 @@ cell AMX_NATIVE_CALL n_send_socket(AMX* amx, cell* params)
 	return ret_val;
 }
 
-//native sendto_socket(Socket:id, ip[], port, data[], len)
-//sendto_socket(int socketid, char* ip, int port, char* data, int len)
-
 cell AMX_NATIVE_CALL n_sendto_socket(AMX* amx, cell* params)
 {
 	char *szData, *szIP;
@@ -146,8 +143,22 @@ cell AMX_NATIVE_CALL n_ssl_init(AMX* amx, cell* params)
 	return 1;
 }
 
+//g_pSocket->m_pSocketInfo[sockID].ssl_clients[slot]
+// native ssl_get_peer_certificate(Socket:id, method, subject[], issuer[], remote_clientid = 0xFFFF);
+
 cell AMX_NATIVE_CALL n_ssl_get_peer_certificate(AMX* amx, cell* params)
 {
-	// TODO
-	return 1;
+	char *szIssuer, *szSubject;
+	cell *dest;
+	int ret = g_pSocket->ssl_get_peer_certificate(params[1], params[2], params[5], szIssuer, szSubject);
+	if(!ret) {
+		amx_GetAddr(amx, params[3], &dest);
+		amx_SetString(dest, szSubject, 0, 0, strlen(szSubject)+1);
+		amx_GetAddr(amx, params[4], &dest);
+		amx_SetString(dest, szIssuer, 0, 0, strlen(szIssuer)+1);
+		free(szSubject);
+		free(szIssuer);
+		return 1;
+	}
+	return 0;
 }

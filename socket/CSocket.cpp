@@ -258,6 +258,21 @@ int CSocket::sendto_remote_client(int socketid, int remote_clientid, char* data)
 	return 0;
 }
 
+int CSocket::socket_send_array(int socketid, cell* aData, int size)
+{
+	if(m_pSocket[socketid] == -1) {
+		logprintf("socket_send_array(): Socket ID %d is invalid", socketid);
+		return 0;
+	}
+	char buf[1024];
+	memset(buf, '\0', sizeof(buf));
+	memcpy(buf, aData, size*4);
+	if(!m_pSocketInfo[socketid].ssl)
+		return send(m_pSocket[socketid], buf, size, 0);
+	else
+		return SSL_write(m_pSocketInfo[socketid].ssl_handle, buf, size);
+}
+
 int CSocket::is_remote_client_connected(int socketid, int remote_clientid)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
@@ -355,15 +370,13 @@ int CSocket::ssl_load_cert(int socketid, char* szCert, char* szKey)
 		logprintf("ssl_load_certificate(): Socket ID %d does not exist.", socketid);
 		return 0;
 	}
-	// force the function to grab files from 'scriptfiles/'
-	/*int path_len = (strlen(szFile)+13);
-	char *szPath = (char*)malloc(path_len);
-	sprintf(szPath, "scriptfiles/%s", szCert/szKey);
-	szPath[path_len] = '\0';*/
 	int cert_ret, key_ret;
 	cert_ret = SSL_CTX_use_certificate_file(m_pSocketInfo[socketid].ssl_context, szCert, SSL_FILETYPE_PEM);
 	key_ret = SSL_CTX_use_PrivateKey_file(m_pSocketInfo[socketid].ssl_context, szKey, SSL_FILETYPE_PEM);
-	return (cert_ret && key_ret);
+	if((cert_ret && key_ret) && SSL_CTX_check_private_key(m_pSocketInfo[socketid].ssl_context))
+		return 1;
+	else
+		return 0;
 }
 
 int CSocket::ssl_connect(int socketid)
@@ -395,21 +408,6 @@ int CSocket::ssl_set_mode(int socketid, int mode)
 	return SSL_CTX_set_mode(m_pSocketInfo[socketid].ssl_context, mode);
 }
 
-int CSocket::socket_send_array(int socketid, cell* aData, int size)
-{
-	if(m_pSocket[socketid] == -1) {
-		logprintf("socket_send_array(): Socket ID %d is invalid", socketid);
-		return 0;
-	}
-	char buf[1024];
-	memset(buf, '\0', sizeof(buf));
-	memcpy(buf, aData, size*4);
-	if(!m_pSocketInfo[socketid].ssl)
-		return send(m_pSocket[socketid], buf, size, 0);
-	else
-		return SSL_write(m_pSocketInfo[socketid].ssl_handle, buf, size);
-}
-
 int CSocket::ssl_set_timeout(int socketid, DWORD dwInterval)
 {
 	if(m_pSocket[socketid] == -1) {
@@ -420,6 +418,22 @@ int CSocket::ssl_set_timeout(int socketid, DWORD dwInterval)
 		return 0;
 	else
 		return 1;
+}
+
+int CSocket::ssl_get_peer_certificate(int socketid, int method, int remote_clientid, char* szIssuer, char* szSubject)
+{
+	X509 *cert;
+	if(!method)
+		cert = SSL_get_peer_certificate(m_pSocketInfo[socketid].ssl_handle);
+	else
+		cert = SSL_get_peer_certificate(m_pSocketInfo[socketid].ssl_clients[remote_clientid]);
+	if(cert != NULL) {
+		strcpy(szIssuer, X509_NAME_oneline(X509_get_subject_name(cert), 0, 0));
+		strcpy(szSubject, X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0));
+		X509_free(cert);
+		return 1;
+	}
+	return 0;
 }
 
 void CSocket::ssl_init()
@@ -512,7 +526,7 @@ void* socket_receive_thread(void* lpParam)
 			int byte_len = recvfrom(iHandle, szBuffer, 2048, 0, (struct sockaddr*)&remote_client, &client_len);
 			if(byte_len > 0) {
 				socketUDP pData;
-				szBuffer[byte_len] = 0;
+				szBuffer[byte_len] = '\0';
 				if(strlen(szBuffer) != byte_len) {
 					memset(pData.arr, '\0', byte_len+1);
 					for(int i = 0;i < byte_len;i++) {
@@ -550,7 +564,6 @@ void* socket_receive_thread(void* lpParam)
 				pData.data = (char*)malloc(sizeof(char*)*byte_len);
 				strcpy(pData.data, szBuffer);
 				onSocketAnswer.push(pData);
-				//memset(szBuffer, '\0', sizeof(szBuffer));
 			}
 			if(!byte_len) {
 				socketClose pData;
