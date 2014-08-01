@@ -22,7 +22,7 @@
 	#include "pthread.h"
 #endif
 
-#ifdef WIN32
+#if (defined(WIN32) || defined(_WIN32) || defined(_WIN64))
 	#define SLEEP(x) { Sleep(x); }
 #else
 	#define SLEEP(x) { usleep(x * 1000); }

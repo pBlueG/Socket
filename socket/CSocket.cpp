@@ -242,7 +242,6 @@ int CSocket::sendto_socket(int socketid, char* ip, int port, char* data, int len
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(port);
 	serv_addr.sin_addr.s_addr = inet_addr(ip);
-	logprintf("Sendto %s | %s | %d | %d", ip, data, port, len);
 	return sendto(m_pSocket[socketid], data, len, 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr)); 
 }
 //return sendto(m_pSocket[socketid], data, len, 0, (struct sockaddr *)&addr, sizeof(addr));
@@ -349,7 +348,11 @@ int CSocket::ssl_create(int socketid, int method)
 		logprintf("ssl_create(): Socket ID %d does not exist.", socketid);
 		return 0;
 	}
+#if (defined(WIN32) || defined(_WIN32) || defined(_WIN64))
 	const SSL_METHOD *ssl_method;
+#else
+	SSL_METHOD **ssl_method;
+#endif
 	ssl_method = ((method) ? SSLv23_server_method() : SSLv23_client_method());
 	m_pSocketInfo[socketid].ssl_context = SSL_CTX_new(ssl_method);
 	if (m_pSocketInfo[socketid].ssl_context == NULL) {
