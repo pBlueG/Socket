@@ -97,7 +97,7 @@ int CSocket::connect_socket(int socketid, char* address, int port)
 		sockaddr_in bind_addr;
 		bind_addr.sin_addr.s_addr = inet_addr(m_pSocketInfo[socketid].bind_ip);
 		bind_addr.sin_family = AF_INET;
-		if(bind(m_pSocket[socketid], (struct sockaddr *)&bind_addr, sizeof(bind_addr)) == -1) {
+		if(bind(m_pSocket[socketid], (struct sockaddr *)&bind_addr, sizeof(bind_addr)) == SOCKET_ERROR) {
 			logprintf("socket_connect(): Socket ID %d has failed to bind. (IP %s, Port %s).", socketid, m_pSocketInfo[socketid].bind_ip);
 			return 0;
 		}
@@ -123,20 +123,22 @@ int CSocket::listen_socket(int socketid, int port)
 		return 0;
 	}
 	struct sockaddr_in addr;
+	memset((char *)&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
-	memset(&(addr.sin_zero), 0, 8);
 	if(strcmp(m_pSocketInfo[socketid].bind_ip, "0.0.0.0") != 0)
 		addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	else
 		addr.sin_addr.s_addr = inet_addr(m_pSocketInfo[socketid].bind_ip);
-	if(bind(m_pSocket[socketid], (struct sockaddr *)&addr, sizeof(addr)) == -1) {
+	if(bind(m_pSocket[socketid], (struct sockaddr *)&addr, sizeof(addr)) == SOCKET_ERROR) {
 		logprintf("socket_listen(): Socket has failed to bind. (IP %s, Port %d)", m_pSocketInfo[socketid].bind_ip, port);
+		logprintf("					The port might be already in use.");
 		return 0;
 	}
-	if(m_pSocketInfo[socketid].tcp) { 
-		if(listen(m_pSocket[socketid], 10) == -1) {
+	if(m_pSocketInfo[socketid].tcp) {
+		if(listen(m_pSocket[socketid], 10) == SOCKET_ERROR) {
 			logprintf("socket_listen(): Socket has failed to listen on port %d.", port);
+			logprintf("					The port might be already in use.");
 			return 0;
 		}
 	}
@@ -238,8 +240,9 @@ int CSocket::sendto_socket(int socketid, char* ip, int port, char* data, int len
 	}
 	struct sockaddr_in serv_addr;
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = port;
+	serv_addr.sin_port = htons(port);
 	serv_addr.sin_addr.s_addr = inet_addr(ip);
+	logprintf("Sendto %s | %s | %d | %d", ip, data, port, len);
 	return sendto(m_pSocket[socketid], data, len, 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr)); 
 }
 //return sendto(m_pSocket[socketid], data, len, 0, (struct sockaddr *)&addr, sizeof(addr));

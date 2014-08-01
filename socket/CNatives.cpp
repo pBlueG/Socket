@@ -143,9 +143,6 @@ cell AMX_NATIVE_CALL n_ssl_init(AMX* amx, cell* params)
 	return 1;
 }
 
-//g_pSocket->m_pSocketInfo[sockID].ssl_clients[slot]
-// native ssl_get_peer_certificate(Socket:id, method, subject[], issuer[], remote_clientid = 0xFFFF);
-
 cell AMX_NATIVE_CALL n_ssl_get_peer_certificate(AMX* amx, cell* params)
 {
 	char *szIssuer, *szSubject;

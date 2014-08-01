@@ -45,6 +45,9 @@
 
 typedef void (*logprintf_t)(char* format, ...);
 
+#ifndef SOCKET_ERROR
+	#define SOCKET_ERROR -1
+#endif
 
 struct remoteConnect {
 	int socketid;

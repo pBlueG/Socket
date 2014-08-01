@@ -12,6 +12,7 @@
 #define INVALID_SOCKET (-1)
 #define INVALID_CLIENT_ID (-1)
 #define NO_IP_RETURN "0.0.0.0"
+#define INADDR_ANY NO_IP_RETURN
 
 // SSL related
 #define METHOD_CLIENT 0 //v23
@@ -51,11 +52,11 @@ native get_remote_client_ip(Socket:id, remote_clientid, ip[]); // tcp only
 native ssl_init(); // initialize the ssl library
 native ssl_create_context(Socket:id, method);
 native ssl_connect(Socket:id); // tcp (client only)
-native ssl_load_cert_into_context(Socket:id, const certificate[], const private_key[]);
+native ssl_load_cert_into_context(Socket:id, const certificate[], const private_key[]); // certificate & private_key might be the same .pem file
 native ssl_shutdown(Socket:id) = socket_destroy;
 native ssl_get_peer_certificate(Socket:id, method, subject[], issuer[], remote_clientid = 0xFFFF);
-native ssl_set_accept_timeout(Socket:id, interval);
-native ssl_set_mode(Socket:id, mode);
+native ssl_set_accept_timeout(Socket:id, interval); // interval in miliseconds
+native ssl_set_mode(Socket:id, mode); // see above SSL_modes (enum)
 
 
 // client & server (udp)
