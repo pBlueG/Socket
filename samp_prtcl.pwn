@@ -22,7 +22,6 @@ public OnFilterScriptInit()
 {
 	new IP[20] = "91.121.97.26"; // random ip for testing
 	new Port = 7844;
-	StatsHandle = socket_create(UDP);
 	if(udpConnect(IP, Port))
 		sendPacket(IP, Port, PRTCL_PLAYERLIST);
 	return 1;
