@@ -68,7 +68,7 @@ int CSocket::find_free_slot(int* arr, int size)
 int CSocket::set_max_connections(int socketid, int maxcon)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("set_max_connections(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("set_max_connections(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	//m_pSocketInfo[socketid].max_clients = new int[maxcon];
@@ -82,7 +82,7 @@ int CSocket::set_max_connections(int socketid, int maxcon)
 int CSocket::connect_socket(int socketid, char* address, int port)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("socket_connect(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("socket_connect(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	struct sockaddr_in addr;
@@ -119,7 +119,7 @@ int CSocket::connect_socket(int socketid, char* address, int port)
 int CSocket::listen_socket(int socketid, int port)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("socket_listen(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("socket_listen(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	struct sockaddr_in addr;
@@ -154,7 +154,7 @@ int CSocket::listen_socket(int socketid, int port)
 int CSocket::stop_listen_socket(int socketid)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("stop_listen_socket(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("stop_listen_socket(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	close_socket(m_pSocket[socketid]);
@@ -166,7 +166,7 @@ int CSocket::stop_listen_socket(int socketid)
 int CSocket::bind_socket(int socketid, char* ip)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("socket_bind(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("socket_bind(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	strcpy(m_pSocketInfo[socketid].bind_ip, ip);
@@ -176,30 +176,28 @@ int CSocket::bind_socket(int socketid, char* ip)
 int CSocket::destroy_socket(int socketid)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("socket_destroy(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("socket_destroy(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
-	if(m_pSocket[socketid] != (-1)) {
-		m_pSocketInfo[socketid].active_thread = false;
-		if(!m_pSocketInfo[socketid].is_client) {
-			for(int i = 0;i < m_pSocketInfo[socketid].max_clients;i++) {
-				if(m_pSocketInfo[socketid].connected_clients[i] != INVALID_CLIENT_ID) {
-					if(m_pSocketInfo[socketid].ssl) SSL_free(m_pSocketInfo[socketid].ssl_clients[i]);
-					close_socket(m_pSocketInfo[socketid].connected_clients[i]);
-					m_pSocketInfo[socketid].connected_clients[i] = INVALID_CLIENT_ID;
-				}
+	m_pSocketInfo[socketid].active_thread = false;
+	m_pSocketInfo[socketid].listen = false;
+	m_pSocketInfo[socketid].max_clients = 0;
+	if(!m_pSocketInfo[socketid].is_client) {
+		for(int i = 0;i < m_pSocketInfo[socketid].max_clients;i++) {
+			if(m_pSocketInfo[socketid].connected_clients[i] != INVALID_CLIENT_ID) {
+				if(m_pSocketInfo[socketid].ssl) SSL_free(m_pSocketInfo[socketid].ssl_clients[i]);
+				close_socket(m_pSocketInfo[socketid].connected_clients[i]);
+				m_pSocketInfo[socketid].connected_clients[i] = INVALID_CLIENT_ID;
 			}
-			if(m_pSocketInfo[socketid].ssl) free(m_pSocketInfo[socketid].ssl_clients);
-			free(m_pSocketInfo[socketid].connected_clients);
 		}
-		close_socket(m_pSocket[socketid]);
-		if(m_pSocketInfo[socketid].ssl) 
-			SSL_CTX_free(m_pSocketInfo[socketid].ssl_context);
-		//if(m_pSocketInfo[socketid].ssl && m_pSocketInfo[socketid].is_client) SSL_free(m_pSocketInfo[socketid].ssl_handle);
-		m_pSocket[socketid] = (-1);
-		m_pSocketInfo[socketid].listen = false;
-		m_pSocketInfo[socketid].max_clients = 0;
+		if(m_pSocketInfo[socketid].ssl) free(m_pSocketInfo[socketid].ssl_clients);
+		free(m_pSocketInfo[socketid].connected_clients);
 	}
+	close_socket(m_pSocket[socketid]);
+	if(m_pSocketInfo[socketid].ssl) 
+		SSL_CTX_free(m_pSocketInfo[socketid].ssl_context);
+	//if(m_pSocketInfo[socketid].ssl && m_pSocketInfo[socketid].is_client) SSL_free(m_pSocketInfo[socketid].ssl_handle);
+	m_pSocket[socketid] = (-1);
 	//g_pThread->Kill(m_pSocketInfo[socketid].con);
 	return 1;
 }
@@ -207,7 +205,7 @@ int CSocket::destroy_socket(int socketid)
 int CSocket::close_remote_connection(int socketid, int remote_client_id)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("close_remote_connection(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("close_remote_connection(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	int *rem_client = &m_pSocketInfo[socketid].connected_clients[remote_client_id];
@@ -223,7 +221,7 @@ int CSocket::close_remote_connection(int socketid, int remote_client_id)
 int CSocket::send_socket(int socketid, char* data, int len)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("socket_send(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("socket_send(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	if(!m_pSocketInfo[socketid].ssl)
@@ -235,7 +233,7 @@ int CSocket::send_socket(int socketid, char* data, int len)
 int CSocket::sendto_socket(int socketid, char* ip, int port, char* data, int len)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("socket_send(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("socket_send(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	struct sockaddr_in serv_addr;
@@ -249,7 +247,7 @@ int CSocket::sendto_socket(int socketid, char* ip, int port, char* data, int len
 int CSocket::sendto_remote_client(int socketid, int remote_clientid, char* data)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("sendto_remote_client(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("sendto_remote_client(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	if(m_pSocketInfo[socketid].connected_clients[remote_clientid] != (INVALID_CLIENT_ID))
@@ -278,7 +276,7 @@ int CSocket::socket_send_array(int socketid, cell* aData, int size)
 int CSocket::is_remote_client_connected(int socketid, int remote_clientid)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("is_remote_client_connected(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("is_remote_client_connected(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	char tempbuf[1024];
@@ -320,7 +318,7 @@ int CSocket::is_socket_valid(int socketid)
 char* CSocket::get_remote_client_ip(int socketid, int remote_clientid)
 {
 	if(m_pSocket[socketid] == -1 || !m_pSocketInfo[socketid].success) {
-		logprintf("get_remote_client_ip(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("get_remote_client_ip(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	struct sockaddr_in peer_addr;
@@ -397,7 +395,7 @@ int CSocket::ssl_connect(int socketid)
 	}
 	int a = SSL_connect(m_pSocketInfo[socketid].ssl_handle);
 	if (a != 1) {
-		logprintf("ssl_connect(): Something has gone wrong %d (Error: %d)", a, SSL_get_error(m_pSocketInfo[socketid].ssl_handle, a));
+		logprintf("ssl_connect(): Something has gone wrong %d (Error: %d).", a, SSL_get_error(m_pSocketInfo[socketid].ssl_handle, a));
         ERR_print_errors_fp(stderr);
 		return 0;
 	}
@@ -417,7 +415,7 @@ int CSocket::ssl_set_mode(int socketid, int mode)
 int CSocket::ssl_set_timeout(int socketid, DWORD dwInterval)
 {
 	if(m_pSocket[socketid] == -1) {
-		logprintf("ssl_set_accept_timeout(): Socket ID %d doesn't exist or hasn't been created yet", socketid);
+		logprintf("ssl_set_accept_timeout(): Socket ID %d doesn't exist or hasn't been created yet.", socketid);
 		return 0;
 	}
 	if (setsockopt(m_pSocket[socketid], SOL_SOCKET, SO_RCVTIMEO, (char *)&dwInterval, sizeof(dwInterval)) == -1)
@@ -488,7 +486,9 @@ void* socket_connection_thread(void* lpParam)
 			} else {
 				if(slot == 0xFFFF) {
 					send(client, "-- Server is full", 17, 0);
-					logprintf("onSocketRemoteFail(Socket: %d)\r\n -- Maximum connection limit exceeded. (Limit is %d)\r\n -- Consider using 'socket_set_max_connections()' to increase the limit", sockID, g_pSocket->m_pSocketInfo[sockID].max_clients);
+					if(m_pSocket[sockID] != (-1)) {
+						logprintf("onSocketRemoteFail(Socket: %d)\r\n -- Maximum connection limit exceeded. (Limit is %d)\r\n -- Consider using 'socket_set_max_connections()' to increase the limit.", sockID, g_pSocket->m_pSocketInfo[sockID].max_clients);
+					}
 				}
 				g_pSocket->close_socket(client);
 				/*
