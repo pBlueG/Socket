@@ -181,7 +181,6 @@ int CSocket::destroy_socket(int socketid)
 	}
 	m_pSocketInfo[socketid].active_thread = false;
 	m_pSocketInfo[socketid].listen = false;
-	m_pSocketInfo[socketid].max_clients = 0;
 	if(!m_pSocketInfo[socketid].is_client) {
 		for(int i = 0;i < m_pSocketInfo[socketid].max_clients;i++) {
 			if(m_pSocketInfo[socketid].connected_clients[i] != INVALID_CLIENT_ID) {
@@ -197,6 +196,7 @@ int CSocket::destroy_socket(int socketid)
 	if(m_pSocketInfo[socketid].ssl) 
 		SSL_CTX_free(m_pSocketInfo[socketid].ssl_context);
 	//if(m_pSocketInfo[socketid].ssl && m_pSocketInfo[socketid].is_client) SSL_free(m_pSocketInfo[socketid].ssl_handle);
+	m_pSocketInfo[socketid].max_clients = 0;
 	m_pSocket[socketid] = (-1);
 	//g_pThread->Kill(m_pSocketInfo[socketid].con);
 	return 1;
